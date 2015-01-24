@@ -182,7 +182,7 @@ class element
 		if (!$this->tag) {
 			return $content;
 		}
-		$tag_attr = $this->tag + $this->_get_attr_str();
+		$tag_attr = $this->tag . $this->_get_attr_str();
 
 		//if not content and $this->tag not in dont_$this_close:
 		if (!$content && !in_array($this->tag, $dont_self_close)) {
