@@ -4,7 +4,7 @@
 $dont_self_close = array('script', 'i', 'iframe', 'div', 'title');
 $indention = '  ';
 //#always_break_before = ['ul', 'li', 'script', 'meta'];
-$always_break_before = array();
+//$always_break_before = array();
 
 
 class element
@@ -211,8 +211,7 @@ class element
 		}
 
 		//if $this->tag in always_break_before:
-		global $always_break_before;
-		if (in_array($this->tag, $always_break_before)) {
+		if (in_array($this->tag, array('ul', 'li', 'script', 'meta'))) {
 			//return ''.join(['\n', indent, '<', tag_attr, '>',
 			//				content,
 			//				'</', $this->tag, '>'])
