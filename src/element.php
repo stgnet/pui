@@ -20,7 +20,7 @@ class element
 	private $navmenu;
 	private $raw_html;
 
-	public function __construct($tag=None, $params=array())
+	public function __construct($tag=None, $kwargs=array())
 	{
 		/*
 			create an element tag with various properties
@@ -45,7 +45,7 @@ class element
 		$this->raw_html = '';	  // html inside this tag
 
 		//for key in kwargs:
-		foreach ($params as $key => $value) {
+		foreach ($kwargs as $key => $value) {
 			if (!$value) {//not kwargs[key]:
 				continue;
 			}

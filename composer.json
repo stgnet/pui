@@ -1,0 +1,22 @@
+{
+    "name": "stgnet/pui",
+    "type": "library",
+    "description": "Programmatic User Interface",
+    "keywords": ["HTML", "CSS", "BOOTSTRAP", "UI", "PHP"],
+    "homepage": "https://github.com/stgnet/pui",
+    "license": "APACHE",
+    "authors": [
+        {
+            "name": "Scott Griepentrog",
+            "email": "scott@griepentrog.com",
+        }
+    ],
+    "require": {
+        "php": ">=5.3.9"
+    },
+    "autoload": {
+        "files": [
+            "pui.php"
+        ]
+    }
+}
