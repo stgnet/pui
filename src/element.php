@@ -1,8 +1,6 @@
 <?php
 // base element class
 
-$dont_self_close = array('script', 'i', 'iframe', 'div', 'title');
-$indention = '  ';
 //#always_break_before = ['ul', 'li', 'script', 'meta'];
 //$always_break_before = array();
 
@@ -10,13 +8,13 @@ $indention = '  ';
 class element
 {
 	private $tag;
-	private $attributes;
+	protected $attributes;
 	private $styles;
 	private $classes;
 	private $head;
 	private $tail;
 	private $ready;
-	private $contents;
+	protected $contents;
 	private $navmenu;
 	private $raw_html;
 
@@ -55,7 +53,7 @@ class element
 			else if ($key == 'text') {
 				$this->raw_html .= htmlentities($value);
 			}
-			else if (key == 'class') {
+			else if ($key == 'class') {
 				$this->classes = explode(' ', $value);
 			}
 			else
@@ -73,7 +71,7 @@ class element
 		return $this->attributes['id'];
 	}
 
-	private function _get_head()
+	protected function _get_head()
 	{
 		//foreach ($subelement in $this->contents) {
 		foreach ($this->contents as $subelement) {
@@ -85,7 +83,7 @@ class element
 		return $this->head;
 	}
 
-	private function _get_tail()
+	protected function _get_tail()
 	{
 		//tail = $this->tail
 		foreach ($this->contents as $subelement) {
@@ -96,7 +94,7 @@ class element
 		return $this->tail;
 	}
 
-	private function _get_ready()
+	protected function _get_ready()
 	{
 		//ready = $this->ready
 		//for subelement in $this->contents:
@@ -108,6 +106,7 @@ class element
 		}
 		// also walk the navmenu
 		//for subelement in $this->navmenu:
+		if ($this->navmenu)
 		foreach ($this->navmenu as $subelement) {
 			//for name, script in subelement._get_ready().iteritems():
 			foreach ($subelement->_get_ready() as $name => $script) {
@@ -141,14 +140,14 @@ class element
 		//for key in $this->attributes:
 		foreach ($this->attributes as $key => $value) {
 			//if $this->attributes[key] in [False, None]:
-			if ($value===False || $value===None)
+			if ($value===False || $value===Null)
 				continue;
 			//if $this->attributes[key] is True:
 			if ($value===True) {
 				$attrib .= ' ' + $key;
 				continue;
 			}
-			$attrib .= ' ' + $key .'="'. (string)$value.'"'; //'="%s"' % $this->attributes[key]
+			$attrib .= ' ' . $key .'="'. (string)$value.'"'; //'="%s"' % $this->attributes[key]
 		}
 		return $attrib;
 	}
@@ -159,8 +158,9 @@ class element
 			recursively walk element tree and generate
 			html document, creating tags along the way
 		*/
-		global $indention;
-		$indent = $indention * $level;
+		$dont_self_close = array('script', 'i', 'iframe', 'div', 'title');
+		$indention = '  ';
+		$indent = str_repeat($indention, $level); //$indention * $level;
 		$content = $this->raw_html; // if $this->raw_html else '';
 		$length = strlen($content);
 		//content += ''.join(item.asHtml(level + 1) for item in $this->contents)
@@ -174,8 +174,8 @@ class element
 					$length = 0;
 				}
 			}
-			$content += html;
-			$length += strlen(html);
+			$content .= $html;
+			$length += strlen($html);
 		}
 
 		//if not $this->tag:
@@ -234,9 +234,9 @@ class element
 			if ($thing) {
 				if (!($thing instanceof element)) {
 					// ad as separate object to retain in supplied order
-					$thing = element(None, array('html' => $thing));
+					$thing = new Element('span', array('html' => $thing));
 				}
-				$this->contents.append($thing);
+				$this->contents[]=$thing;
 			}
 		}
 		return $this;
@@ -280,7 +280,7 @@ class element
 	public function addClass()
 	{
 		//for name in args:
-		foreach (func-get_args() as $class)
+		foreach (func_get_args() as $class)
 		{
 			if (!in_array($class, $this->classes)) {
 				$this->classes[]=$class;

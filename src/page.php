@@ -6,11 +6,11 @@ class Page extends Element
 	public function __construct($title='Web Page', $kwargs=array())
 	{
 		//pui.element.__init__(self, 'page', **kwargs)
-		$this->title = title;
-		$this->head[] = Element('meta', array('charset' => 'utf-8'));
+		$this->title = $title;
+		$this->head[] = new Element('meta', array('charset' => 'utf-8'));
 	}
 
-	public function asHtml(self)
+	public function asHtml()
 	{
 		/*
 			redefine html output for this page
@@ -27,30 +27,33 @@ class Page extends Element
 		if ($page_ready)
 		{
 			$scripts = implode("\n", $page_ready);
-			ready_script_func = '\n'.join([
-				"$(document).ready(function(){",
-				scripts,
-				"});"
-			])
-			ready_script = pui.element(
-				'script',
-				type='text/javascript',
-				html=ready_script_func)
+			$ready_script_func = implode("\n", array(
+				'$(document).ready(function(){',
+				$scripts,
+				'});'
+			));
+			$ready_script = new Element('script', array(
+				'type' => 'text/javascript',
+				'html' => $ready_script_func
+			));
+		}
 
 		// create fake body element
-		body = pui.element('body')
-		body.contents = $this->contents
-		body.attributes = $this->attributes
+		$body = new Element('body');
+		$body->contents = $this->contents;
+		$body->attributes = $this->attributes;
 
 		# construct page with head and body
-		html = pui.element('html').add(
-			pui.element('head').add(
-				pui.element('title', text=$this->title),
-			).addList(page_head)
-		).add(
-			body.addList(page_tail).add(ready_script)
-		)
+		$html = new Element('html');
+		$head = new Element('head');
+		$title = new Element('title', array('text'=>$this->title));
+		$html->Add($head);
+		$head->Add($title);
+		$head->Add($page_head);
+		$html->Add($body);
+		$body->Add($page_tail);
+		$body->Add($ready_script);
 
-		return '<!DOCTYPE html>' + html.asHtml() + '\n'
+		return '<!DOCTYPE html>' . $html->asHtml() . "\n";
 	}
 }
