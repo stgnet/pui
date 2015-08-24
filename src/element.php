@@ -1,4 +1,6 @@
 <?php
+//namespace stgnet\pui;
+
 // base element class
 
 //#always_break_before = ['ul', 'li', 'script', 'meta'];
@@ -7,19 +9,28 @@
 
 class element
 {
-	private $tag;
+	protected $tag;
 	protected $attributes;
-	private $styles;
-	private $classes;
-	private $head;
-	private $tail;
-	private $ready;
+	protected $styles;
+	protected $classes;
+	protected $head;
+	protected $tail;
+	protected $ready;
 	protected $contents;
-	private $navmenu;
-	private $raw_html;
+	protected $navmenu;
+	protected $raw_html;
+	protected $id;
 
 	public function __construct($tag=None, $kwargs=array())
 	{
+		if (empty($this->id)) {
+			if (empty($GLOBALS['pui_element_count'])) {
+				$GLOBALS['pui_element_count'] = 0;
+			}
+			$this->id = ++$GLOBALS['pui_element_count'];
+		}
+		echo "==> TAG=$tag instance={$this->id}\n";
+		print_r($kwargs);
 		/*
 			create an element tag with various properties
 			used to construct a nested list of elements
@@ -27,20 +38,21 @@ class element
 		*/
 
 		// if tag else ''  # "%s" % id($this)
-		if ($tag)
+		if ($tag) {
 			$this->tag = $tag;
-		else
-			throw new \Exception("tag not defined");
+		} else {
+			$this->tag = "#" . $this->id;
+		}
 
 		$this->attributes = array();
 		$this->styles = array();
 		$this->classes = array();
-		$this->head = array();  // tags that go in <head>
-		$this->tail = array();  // usually <script>'s at end of page inside body
-		$this->ready = array();  // document ready scripts (named for collision)
+		$this->head = array();      // tags that go in <head>
+		$this->tail = array();      // usually <script>'s at end of page inside body
+		$this->ready = array();     // document ready scripts (named for collision)
 		$this->contents = array();  // sub content to this element (nested)
 		$this->navmenu = array();   // nested navigation menus
-		$this->raw_html = '';	  // html inside this tag
+		$this->raw_html = '';       // html inside this tag
 
 		//for key in kwargs:
 		foreach ($kwargs as $key => $value) {
@@ -48,6 +60,10 @@ class element
 				continue;
 			}
 			else if ($key == 'html') {
+				if (!is_string($value)) {
+					print_r($value);
+					throw new Exception('html value is not a string');
+				}
 				$this->raw_html .= $value;
 			}
 			else if ($key == 'text') {
@@ -73,14 +89,16 @@ class element
 
 	protected function _get_head()
 	{
-		//foreach ($subelement in $this->contents) {
+		$head = array();
+		echo "Getting head for ".$this->tag."\n";
 		foreach ($this->contents as $subelement) {
-			//for ($item in $subelement->_get_head()) {
+			echo "head of ".$this->tag." checking ".$subelement->tag."\n";
 			foreach ($subelement->_get_head() as $item) {
-				$this->head->append($item);
+				echo "found item\n";
+				$head[]=$item;
 			}
 		}
-		return $this->head;
+		return $head;
 	}
 
 	protected function _get_tail()
@@ -88,7 +106,8 @@ class element
 		//tail = $this->tail
 		foreach ($this->contents as $subelement) {
 			foreach ($subelement->_get_tail() as $item) {
-				$this->tail->append($item);
+				//$this->tail->append($item);
+				$this->tail[] = $item;
 			}
 		}
 		return $this->tail;
@@ -138,7 +157,7 @@ class element
 		}
 		$attrib = '';
 		//for key in $this->attributes:
-		foreach ($this->attributes as $key => $value) {
+		if ($this->attributes) foreach ($this->attributes as $key => $value) {
 			//if $this->attributes[key] in [False, None]:
 			if ($value===False || $value===Null)
 				continue;
@@ -161,14 +180,14 @@ class element
 		$dont_self_close = array('script', 'i', 'iframe', 'div', 'title');
 		$indention = '  ';
 		$indent = str_repeat($indention, $level); //$indention * $level;
-		$content = $this->raw_html; // if $this->raw_html else '';
+		$content = $this->raw_html;
 		$length = strlen($content);
 		//content += ''.join(item.asHtml(level + 1) for item in $this->contents)
 		//for item in $this->contents:
 		foreach ($this->contents as $item) {
 			$html = $item->asHtml($level + 1);
 			//if not html.startswith('\n') and html.startswith('<'):
-			if ($html[0]!="\n" && $html[0]!='<') {
+			if ($html && $html[0]!="\n" && $html[0]!='<') {
 				if ($length + strlen($html) > 70) {
 					$html = '\n' + $indent + $indention + $html;
 					$length = 0;

@@ -1,7 +1,33 @@
 <?php
+//namespace stgnet\pui;
 
-class Bootstrap extends Element
+require_once 'element.php';
+
+class Bootstrap extends element
 {
+	public function __construct()
+	{
+		parent::__construct('bootstrap');
+
+		$this->head[]=new Element('link', array(
+			'rel' => 'stylesheet',
+			'href' => $this->url($theme, 'css'),
+			'type' => 'text/css'
+		));
+
+		$this->head[]=new Element('meta', array(
+			'name' => 'viewport',
+			'content' => 'width=device-width, initial-scale=1'
+		));
+
+		$this->tail[]=new Element('script', array(
+			'src' => $this->url($theme, 'jquery')
+		));
+
+		$this->tail[]=new Element('script', array(
+			'src' => $this->url($theme, 'js')
+		));
+	}
 	private function url($theme, $type)
 	{
 		if ($type == 'jquery')
@@ -25,29 +51,6 @@ class Bootstrap extends Element
 			$version,
 			$theme,
 			'bootstrap.min.'.$type
-		));
-	}
-	public function __construct($theme=False)
-	{
-		parent::__construct('bootstrap');
-
-		$this->head[]=new Element('link', array(
-			'rel' => 'stylesheet',
-			'href' => $this->url($theme, 'css'),
-			'type' => 'text/css'
-		));
-
-		$this->head[]=new Element('meta', array(
-			'name' => 'viewport',
-			'content' => 'width=device-width, initial-scale=1'
-		));
-
-		$this->tail[]=new Element('script', array(
-			'src' => $this->url($theme, 'jquery')
-		));
-
-		$this->tail[]=new Element('script', array(
-			'src' => $this->url($theme, 'js')
 		));
 	}
 }

@@ -12,6 +12,9 @@ class pui
 	{
 		if (!class_exists($class, FALSE)) {
 			$file='vendor/stgnet/pui/src/'.strtolower($class).'.php';
+			if (!file_exists($file) && file_exists('src/'.strtolower($class).'.php')) {
+				$file = 'src/'.strtolower($class).'.php';
+			}
 			if (!file_exists($file)) {
 				throw new \Exception($file.' does not exist'); //."\n".`ls -R`);
 			}
@@ -20,8 +23,11 @@ class pui
 				throw new \Exception('Class '.$class.' does not exist after require '.$file);
 			}
 		}
-		$reflection = new ReflectionClass($class);
-		return $reflection->newInstanceArgs($args);
+		//$reflection = new ReflectionClass($class);
+		//return $reflection->newInstanceArgs($args);
+		$obj = new $class();
+		call_user_func_array(array($obj, '__construct'), $args);
+		return $obj;
 	}
 	public function __call($class, $args)
 	{
