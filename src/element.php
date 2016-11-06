@@ -29,8 +29,8 @@ class element
 			}
 			$this->id = ++$GLOBALS['pui_element_count'];
 		}
-		echo "==> TAG=$tag instance={$this->id}\n";
-		print_r($kwargs);
+		//echo "==> TAG=$tag instance={$this->id}\n";
+		//print_r($kwargs);
 		/*
 			create an element tag with various properties
 			used to construct a nested list of elements
@@ -89,12 +89,9 @@ class element
 
 	protected function _get_head()
 	{
-		$head = array();
-		echo "Getting head for ".$this->tag."\n";
+		$head = $this->head;
 		foreach ($this->contents as $subelement) {
-			echo "head of ".$this->tag." checking ".$subelement->tag."\n";
 			foreach ($subelement->_get_head() as $item) {
-				echo "found item\n";
 				$head[]=$item;
 			}
 		}
@@ -178,6 +175,7 @@ class element
 			html document, creating tags along the way
 		*/
 		$dont_self_close = array('script', 'i', 'iframe', 'div', 'title');
+		$always_break_before = array('ul', 'li', 'script', 'meta', 'link');
 		$indention = '  ';
 		$indent = str_repeat($indention, $level); //$indention * $level;
 		$content = $this->raw_html;
@@ -206,11 +204,14 @@ class element
 		//if not content and $this->tag not in dont_$this_close:
 		if (!$content && !in_array($this->tag, $dont_self_close)) {
 			//return ''.join(['<', tag_attr, ' />'])
+			if (in_array($this->tag, $always_break_before)) {
+				return "\n".$indent.'<'.$tag_attr.' />';
+			}
 			return '<'.$tag_attr.' />';
 		}
 
 		//if content.startswith('\n'):
-		if ($content[0]=="\n") {
+		if ($content && $content[0]=="\n") {
 			//return ''.join(['\n', indent, '<', tag_attr, '>',
 			//				content,
 			//				'\n', indent, '</', $this->tag, '>'])
@@ -250,13 +251,25 @@ class element
 	{
 		//for thing in things:
 		foreach ($things as $thing) {
-			if ($thing) {
-				if (!($thing instanceof element)) {
-					// ad as separate object to retain in supplied order
-					$thing = new Element('span', array('html' => $thing));
-				}
-				$this->contents[]=$thing;
+			if (!$thing) {
+				continue;
 			}
+			if (is_array($thing)) {
+				// flatten nested arrays
+				$this->addList($thing);
+				continue;
+			}
+/*
+			if (!($thing instanceof element)) {
+				// presume 
+				// ad as separate object to retain in supplied order
+				//$thing = new Element('span', array('html' => $thing));
+				$newthing = new Element('span');
+				$newthing->add($thing);
+				$thing = $newthing;
+			}
+*/
+			$this->contents[]=$thing;
 		}
 		return $this;
 	}

@@ -19,11 +19,8 @@ class Page extends Element
 		*/
 		// get the head/tail before contents duplicated
 		$page_head = $this->_get_head();
-print_r("page_head: "); print_r($page_head);
 		$page_tail = $this->_get_tail();
-print_r("page_tail: "); print_r($page_tail);
 		$page_ready = $this->_get_ready();
-print_r("page_ready: "); print_r($page_ready);
 
 		// construct ready script section
 		$ready_script = NULL;

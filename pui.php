@@ -23,11 +23,14 @@ class pui
 				throw new \Exception('Class '.$class.' does not exist after require '.$file);
 			}
 		}
-		//$reflection = new ReflectionClass($class);
-		//return $reflection->newInstanceArgs($args);
-		$obj = new $class();
-		call_user_func_array(array($obj, '__construct'), $args);
+		$reflection = new ReflectionClass($class);
+		return $reflection->newInstanceArgs($args);
+/*
+echo $class." => ";print_r($args);
+		$obj = new $class($args);
+		//call_user_func_array(array($obj, '__construct'), $args);
 		return $obj;
+*/
 	}
 	public function __call($class, $args)
 	{

@@ -5,9 +5,13 @@ require_once 'element.php';
 
 class Bootstrap extends element
 {
-	public function __construct()
+	public function __construct($theme = False)
 	{
 		parent::__construct('bootstrap');
+
+		if (!$theme) {
+			$theme='default';
+		}
 
 		$this->head[]=new Element('link', array(
 			'rel' => 'stylesheet',
