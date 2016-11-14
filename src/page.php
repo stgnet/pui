@@ -6,6 +6,7 @@ class Page extends Element
 	public function __construct($title='Web Page', $kwargs=array())
 	{
 		//pui.element.__init__(self, 'page', **kwargs)
+		parent::__construct(False, $kwargs);
 		$this->title = $title;
 		$this->head[] = new Element('meta', array('charset' => 'utf-8'));
 	}
@@ -43,8 +44,8 @@ class Page extends Element
 		$body->contents = $this->contents;
 		$body->attributes = $this->attributes;
 
-		# construct page with head and body
-		$html = new Element('html');
+		// construct page with head and body
+		$html = new Element('html', $this->attributes);
 		$head = new Element('head');
 		$title = new Element('title', array('text'=>$this->title));
 		$html->Add($head);

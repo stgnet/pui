@@ -17,18 +17,12 @@ class element
 	protected $tail;
 	protected $ready;
 	protected $contents;
-	protected $navmenu;
 	protected $raw_html;
 	protected $id;
 
-	public function __construct($tag=None, $kwargs=array())
+	// create object with optional tag and optional parameters by array of key=>value pair
+	public function __construct($tag=False, $kwargs=array())
 	{
-		if (empty($this->id)) {
-			if (empty($GLOBALS['pui_element_count'])) {
-				$GLOBALS['pui_element_count'] = 0;
-			}
-			$this->id = ++$GLOBALS['pui_element_count'];
-		}
 		//echo "==> TAG=$tag instance={$this->id}\n";
 		//print_r($kwargs);
 		/*
@@ -38,11 +32,14 @@ class element
 		*/
 
 		// if tag else ''  # "%s" % id($this)
+/*
 		if ($tag) {
 			$this->tag = $tag;
 		} else {
 			$this->tag = "#" . $this->id;
 		}
+*/
+		$this->tag = $tag;
 
 		$this->attributes = array();
 		$this->styles = array();
@@ -51,8 +48,7 @@ class element
 		$this->tail = array();      // usually <script>'s at end of page inside body
 		$this->ready = array();     // document ready scripts (named for collision)
 		$this->contents = array();  // sub content to this element (nested)
-		$this->navmenu = array();   // nested navigation menus
-		$this->raw_html = '';       // html inside this tag
+		$this->raw_html = '';       // html inside this tag but before contents[]
 
 		//for key in kwargs:
 		foreach ($kwargs as $key => $value) {
@@ -79,14 +75,22 @@ class element
 		}
 	}
 
+	// obtain an unique id to this object for reference elsewhere
 	public function get_id()
 	{
+		if (empty($this->id)) {
+			if (empty($GLOBALS['pui_element_count'])) {
+				$GLOBALS['pui_element_count'] = 0;
+			}
+			$this->id = ++$GLOBALS['pui_element_count'];
+		}
 		if (empty($this->attributes['id'])) {
-			$this->attributes['id'] = uniqid('id');
+			$this->attributes['id'] = $this->tag.'-'.$this->id; //uniqid('id');
 		}
 		return $this->attributes['id'];
 	}
 
+	// internal function for walking content tree to get all head content
 	protected function _get_head()
 	{
 		$head = $this->head;
@@ -98,6 +102,7 @@ class element
 		return $head;
 	}
 
+	// internal function for walking content tree to get all tail content
 	protected function _get_tail()
 	{
 		//tail = $this->tail
@@ -110,6 +115,7 @@ class element
 		return $this->tail;
 	}
 
+	// internal function for walking content tree to get all ready content
 	protected function _get_ready()
 	{
 		//ready = $this->ready
@@ -120,54 +126,42 @@ class element
 				$this->ready[$name] = $script;
 			}
 		}
-		// also walk the navmenu
-		//for subelement in $this->navmenu:
-		if ($this->navmenu)
-		foreach ($this->navmenu as $subelement) {
-			//for name, script in subelement._get_ready().iteritems():
-			foreach ($subelement->_get_ready() as $name => $script) {
-				$this->ready[$name] = $script;
-			}
-		}
 		return $this->ready;
 	}
 
+	// internal function for generating attributes for this tag to be output as html
 	private function _get_attr_str()
 	{
 		if ($this->styles) {
-			//$this->attributes['style'] = ';'.join(
-			//	key + ': '+$this->styles[key] for key in $this->styles)
-			$this->attributes['style'] = '';
+			$styles = '';
 			foreach ($this->styles as $key => $value) {
-				$this->attributes['style'] .= $key.': '.$value.';';
+				$styles .= $key.': '.$value.';';
 			}
+			$this->attributes = array_merge(array('style' => $styles), $this->attributes);
 		}
 		if ($this->classes) {
-			//$this->attributes['class'] = ' '.join(
-			//	key for key in $this->classes)
-			$this->attributes['class'] = '';
+			$classes = '';
 			foreach ($this->classes as $value) {
-				if ($this->attributes['class'])
-					$this->attributes['class'].=' ';
-				$this->attributes['class'].=$value;
+				if ($classes)
+					$classes.=' ';
+				$classes.=$value;
 			}
+			$this->attributes = array_merge(array('class' => $classes), $this->attributes);
 		}
 		$attrib = '';
-		//for key in $this->attributes:
 		if ($this->attributes) foreach ($this->attributes as $key => $value) {
-			//if $this->attributes[key] in [False, None]:
 			if ($value===False || $value===Null)
 				continue;
-			//if $this->attributes[key] is True:
 			if ($value===True) {
 				$attrib .= ' ' + $key;
 				continue;
 			}
-			$attrib .= ' ' . $key .'="'. (string)$value.'"'; //'="%s"' % $this->attributes[key]
+			$attrib .= ' ' . $key .'="'. (string)$value.'"';
 		}
 		return $attrib;
 	}
 
+	// generate this object and all content as html
 	public function asHtml($level=0)
 	{
 		/*
@@ -247,50 +241,75 @@ class element
 			'</'.$this->tag.'>';
 	}
 
-	public function addList($things)
+	// override to add an outer object around this object when being added
+	public function outerObject()
 	{
+		return $this;
+	}
+
+	// override to point to an inner object for adding content to
+	public function innerObject()
+	{
+		/* if ($this->content) return $this->contents[0]; */
+		return $this;
+	}
+
+	// override to manipulate content objects added to this object
+	public function addObject($thing)
+	{
+		return $thing;
+	}
+
+	// override to manipulate handling of arrays
+	public function addArray($things)
+	{
+		// by default, flatten array invisibly
+		return $this->addContent($things);
+	}
+
+	// semi-internal method to add array of things to content
+	public function addContent($things)
+	{
+		$inner = $this->innerObject();
+
 		//for thing in things:
 		foreach ($things as $thing) {
 			if (!$thing) {
 				continue;
 			}
 			if (is_array($thing)) {
-				// flatten nested arrays
-				$this->addList($thing);
+				$inner->addArray($thing);
 				continue;
 			}
-/*
-			if (!($thing instanceof element)) {
-				// presume 
-				// ad as separate object to retain in supplied order
-				//$thing = new Element('span', array('html' => $thing));
-				$newthing = new Element('span');
-				$newthing->add($thing);
-				$thing = $newthing;
+
+			if ($thing instanceof element) {
+				$inner->contents[] = $inner->addObject($thing->outerObject());
+				continue;
 			}
-*/
-			$this->contents[]=$thing;
+
+			// presume $thing is html string or can be converted to string of html
+			$newthing = new Element(False, array('html' => (string)$thing));
+			$inner->contents[] = $inner->addObject($newthing);
 		}
 		return $this;
 	}
 
+	// convenience function for functionally adding much content
 	public function add()
 	{
-		return $this->addList(func_get_args());
+		return $this->addContent(func_get_args());
 	}
 
-	public function menu()
+	// by default strings are added as html, this adds as text
+	public function addText($text)
 	{
-		//for thing in things:
-		foreach (func_get_args() as $thing) {
-			$this->navmenu[] = $thing;
-		}
-		return $this;
+		// add text as separate content element rather than append to raw_html so as to keep add() order
+		$this->innerObject()->contents[] = new Element(False, array('text' => $text));
 	}
 
+	// set multiple attributes by key=>value pair
 	public function attr($kwargs)
 	{
-		//for key in $kwargs
 		foreach ($kwargs as $key => $value) {
 			//if key is '_class':
 			//	raise 'not handled'
@@ -300,6 +319,7 @@ class element
 		return $this;
 	}
 
+	// set multiple styles by key=>value pair
 	public function style($kwargs)
 	{
 		foreach ($kwargs as $key => $value) {
@@ -309,6 +329,7 @@ class element
 		return $this;
 	}
 
+	// add a class name to this object
 	public function addClass()
 	{
 		//for name in args:
@@ -321,6 +342,7 @@ class element
 		return $this;
 	}
 
+	// add a ready script to page
 	public function addReadyScript($kwargs)
 	{
 		foreach ($kwargs as $key => $value) {
@@ -328,6 +350,12 @@ class element
 		}
 		return $this;
 	}
+
+	/*
+	 * the remainder of this class is public methods
+	 * used to modify objects using html5 techniques
+	 * or in bootstrap specific ways
+	*/
 
 	public function center()
 	{

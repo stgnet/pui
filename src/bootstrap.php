@@ -5,18 +5,21 @@ require_once 'element.php';
 
 class Bootstrap extends element
 {
+	private $theme;
+
 	public function __construct($theme = False)
 	{
-		parent::__construct('bootstrap');
+		parent::__construct();  /* placeholder object, don't output an actual tag */
 
-		if (!$theme) {
-			$theme='default';
+		if ($theme) {
+			$this->theme = $theme;
+		} else {
+			$this->theme='default';
 		}
 
-		$this->head[]=new Element('link', array(
-			'rel' => 'stylesheet',
-			'href' => $this->url($theme, 'css'),
-			'type' => 'text/css'
+		$this->head[]=new Element('meta', array(
+			'http-equiv' => 'X-UA-Compatible',
+			'content' => 'IE=edge'
 		));
 
 		$this->head[]=new Element('meta', array(
@@ -24,32 +27,40 @@ class Bootstrap extends element
 			'content' => 'width=device-width, initial-scale=1'
 		));
 
-		$this->tail[]=new Element('script', array(
-			'src' => $this->url($theme, 'jquery')
+		$this->head[]=new Element('link', array(
+			'rel' => 'stylesheet',
+			'href' => $this->url('css'),
+			'type' => 'text/css'
 		));
 
 		$this->tail[]=new Element('script', array(
-			'src' => $this->url($theme, 'js')
+			'src' => $this->url('jquery')
+		));
+
+		$this->tail[]=new Element('script', array(
+			'src' => $this->url('js')
 		));
 	}
-	private function url($theme, $type)
+
+	// utility function for generating bootstrap urls
+	private function url($type)
 	{
 		if ($type == 'jquery')
 		{
 			return '//code.jquery.com/jquery-1.10.1.min.js';
 		}
 
-		$cdn = '//netdna.bootstrapcdn.com';
-		$version = '3.1.1';
+		$cdn = '//maxcdn.bootstrapcdn.com';
 		$which = 'bootstrap';
+		$version = '3.3.6';
 		$theme = $type;
-		if ($type == 'css' && $theme)
+		if ($type == 'css')
 		{
 			$which = 'bootswatch';
-			$theme = $theme;
+			$theme = $this->theme;
 		}
 
-		return implode(',', array(
+		return implode('/', array(
 			$cdn,
 			$which,
 			$version,
