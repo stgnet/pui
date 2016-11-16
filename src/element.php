@@ -61,6 +61,8 @@ class element
 					throw new Exception('html value is not a string');
 				}
 				$this->raw_html .= $value;
+
+//throw new Exception('have raw_html='.$this->raw_html);
 			}
 			else if ($key == 'text') {
 				$this->raw_html .= htmlentities($value);
@@ -168,35 +170,49 @@ class element
 			recursively walk element tree and generate
 			html document, creating tags along the way
 		*/
-		$dont_self_close = array('script', 'i', 'iframe', 'div', 'title');
+		$dont_close=array('meta');
+		$dont_self_close = array('script', 'i', 'iframe', 'div', 'title', 'span');
 		$always_break_before = array('ul', 'li', 'script', 'meta', 'link');
 		$indention = '  ';
 		$indent = str_repeat($indention, $level); //$indention * $level;
-		$content = $this->raw_html;
-		$length = strlen($content);
-		//content += ''.join(item.asHtml(level + 1) for item in $this->contents)
+		$html = $this->raw_html;
+		$length = strlen($html);
+		//html += ''.join(item.asHtml(level + 1) for item in $this->contents)
 		//for item in $this->contents:
-		foreach ($this->contents as $item) {
-			$html = $item->asHtml($level + 1);
-			//if not html.startswith('\n') and html.startswith('<'):
-			if ($html && $html[0]!="\n" && $html[0]!='<') {
-				if ($length + strlen($html) > 70) {
-					$html = '\n' + $indent + $indention + $html;
+		if ($this->tag) {
+			$increment = 1;
+		} else {
+			$increment = 0;
+		}
+
+		if ($this->contents) foreach ($this->contents as $item) {
+			$sub_html = $item->asHtml($level + $increment);
+			//if not sub_html.startswith('\n') and sub_html.startswith('<'):
+			if ($sub_html && $sub_html[0]!="\n" && $sub_html[0]!='<') {
+				if ($length + strlen($sub_html) > 70) {
+					$sub_html = "\n" . $indent . $indention . $sub_html;
 					$length = 0;
 				}
 			}
-			$content .= $html;
-			$length += strlen($html);
+			$html .= $sub_html;
+			$length = strlen($html);
 		}
 
 		//if not $this->tag:
 		if (!$this->tag) {
-			return $content;
+			return $html;
 		}
 		$tag_attr = $this->tag . $this->_get_attr_str();
 
-		//if not content and $this->tag not in dont_$this_close:
-		if (!$content && !in_array($this->tag, $dont_self_close)) {
+		if (!$html && in_array($this->tag, $dont_close)) {
+			if (in_array($this->tag, $always_break_before)) {
+				return "\n".$indent.'<'.$tag_attr.'>';
+			}
+			return '<'.$tag_attr.'>';
+		}
+
+		//if not html and $this->tag not in dont_$this_close:
+		if (!$html && !in_array($this->tag, $dont_self_close)) {
 			//return ''.join(['<', tag_attr, ' />'])
 			if (in_array($this->tag, $always_break_before)) {
 				return "\n".$indent.'<'.$tag_attr.' />';
@@ -204,40 +220,40 @@ class element
 			return '<'.$tag_attr.' />';
 		}
 
-		//if content.startswith('\n'):
-		if ($content && $content[0]=="\n") {
+		//if html.startswith('\n'):
+		if ($html && $html[0]=="\n") {
 			//return ''.join(['\n', indent, '<', tag_attr, '>',
-			//				content,
+			//				html,
 			//				'\n', indent, '</', $this->tag, '>'])
 			return	"\n".$indent.'<'.$tag_attr.'>'.
-				$content.
+				$html.
 				"\n".$indent.'</'.$this->tag.'>';
 		}
 
-		//if strlen(content) + strlen(indent) > 70:
-		if (strlen($content) + strlen($indent) > 70) {
+		//if strlen(html) + strlen(indent) > 70:
+		if (strlen($html) + strlen($indent) > 70) {
 			//return ''.join(['\n', indent, '<', tag_attr, '>',
-			//				'\n', indent, indention, content,
+			//				'\n', indent, indention, html,
 			//				'\n', indent, '</', $this->tag, '>'])
 			return	"\n".$indent.'<'.$tag_attr.'>'.
-				"\n".$indent.$indention.$content.
+				"\n".$indent.$indention.$html.
 				"\n".$indent.'</'.$this->tag.'>';
 		}
 
 		//if $this->tag in always_break_before:
 		if (in_array($this->tag, array('ul', 'li', 'script', 'meta'))) {
 			//return ''.join(['\n', indent, '<', tag_attr, '>',
-			//				content,
+			//				html,
 			//				'</', $this->tag, '>'])
 			return	"\n".$indent.'<'.$tag_attr.'>'.
-				$content.
+				$html.
 				'</'.$this->tag.'>';
 		}
 		//return ''.join(['<', tag_attr, '>',
-		//				content,
+		//				html,
 		//				'</', $this->tag, '>'])
 		return	'<'.$tag_attr.'>'.
-			$content.
+			$html.
 			'</'.$this->tag.'>';
 	}
 
@@ -288,7 +304,7 @@ class element
 			}
 
 			// presume $thing is html string or can be converted to string of html
-			$newthing = new Element(False, array('html' => (string)$thing));
+			$newthing = new Element(Null, array('html' => (string)$thing));
 			$inner->contents[] = $inner->addObject($newthing);
 		}
 		return $this;

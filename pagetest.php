@@ -39,9 +39,8 @@ $menu=array(
 
 echo $pui->page('Very Much Longer Page Name <test>', array('lang' => 'en'))->background('blue')->add(
     $pui->bootstrap('flatly'),
-	$pui->navbar()->addMenu($menu),
-    $pui->heading(1, "this & that and several other things too")
-)->asHtml(0, True);
+	$pui->navbar($pui->link('#','BRAND!'))->addContent($menu),
+    $pui->heading(1, "this & that and several other things too"))->asHtml(0, True);
 
 /* <div class="navbar navbar-default" role="navigation">
       <div class="container-fluid">

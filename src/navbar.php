@@ -65,7 +65,7 @@ class Navbar extends Element
 
 	public function __construct()
 	{
-		parent::__construct('nav', array('class' => 'navbar navbar-default'));
+		parent::__construct('div', array('class' => 'navbar navbar-default', 'role'=>'navigation'));
 
 		$nav_list = pui::ulist('nav navbar-nav');
 		$nav_menu = pui::element('div', array('class' => 'collapse navbar-collapse'))->add($nav_list);
