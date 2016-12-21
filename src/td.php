@@ -1,9 +1,9 @@
 <?php
 
-class Td extends Element
+class td extends element
 {
-	public function __construct($text)
+	public function __construct($text=None)
 	{
-		parent::__construct('td', array('text'=>$text));
+		parent::__construct('td', array('text' => $text));
 	}
 }

@@ -1,62 +1,63 @@
 <?php
 
-require_once 'thead.php';
-require_once 'tbody.php';
-require_once 'tr.php';
-require_once 'th.php';
-require_once 'td.php';
+require_once 'element.php';
 
 class Table extends Element
 {
-	public function __construct($content, $options=array())
+	public $columns;
+
+	public function __construct($columns=0)
 	{
-		$this->table_content = $content;
 		parent::__construct('table');
+		$this->columns = $columns;
 	}
-	private function columns_from_table($table)
+	// override the array handler to add td's around each element
+	public function addArray($things)
 	{
-		$columns = array();
-		foreach ($table as $index => $row)
-		{
-			foreach ($row as $column => $data)
-			{
-				if (!in_array($column, $columns))
-				{
-					$columns[] = $column;
+		$tr = new element('tr');
+		foreach ($things as $item) {
+			$td = new element('td');
+			$td->add($item);
+			$tr->add($td);
+		}
+		$this->add($tr);
+	}
+	// override the object handler to add 
+	public function addObject($thing)
+	{
+		// is this already a tr object?
+		if (is_object($thing) && $thing instanceof element && $thing->get_tag() == 'tr') {
+			return $thing;
+		}
+		// somebody might have given us a modified td object (add tr around it)
+		if (is_object($thing) && $thing instanceof element && $thing->get_tag() == 'td') {
+			return pui::element('tr')->add($thing);
+		}
+		return pui::element('tr')->add(pui::element('td')->add($thing));
+	}
+	public function addData($data, $header=False)
+	{
+		/* count the columns */
+		foreach ($data as $row) {
+			if (!is_array($row)) {
+				if ($this->columns < 1) {
+					$this->columns = 1;
 				}
+				continue;
+			}
+			$count = 0;
+			foreach ($row as $col) {
+				$count++;
+			}
+			if ($this->columns < $count) {
+				$this->columns = $count;
 			}
 		}
-		return $columns;
-	}
-	private function thead_from_columns($columns)
-	{
-		$thead = new Thead();
-		$tr = new Tr();
-		foreach ($columns as $column)
-		{
-			$th = new Th($column);
-			$tr->Add($th);
+
+		/* now add the data */
+		foreach ($data as $row) {
+			$this->add($row);
 		}
-		$thead->Add($tr);
-		return $thead;
-	}
-	public function asHtml($level)
-	{
-		/* add tags JIT */
-		$columns = $this->columns_from_table($this->table_content);
-		$this->add($this->thead_from_columns($columns));
-		$tbody = new Tbody();
-		foreach ($this->table_content as $index => $row)
-		{
-			$tr = new Tr();
-			foreach ($row as $column => $data)
-			{
-				$td = new Td($data);
-				$tr->Add($td);
-			}
-			$tbody->Add($tr);
-		}
-		$this->add($tbody);
-		return parent::asHtml($level);
+		return $this;
 	}
 }

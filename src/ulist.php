@@ -2,7 +2,7 @@
 
 class ulist extends Element
 {
-	public function __construct($class=False)
+	public function __construct($class=None)
 	{
 		parent::__construct('ul', array('class' => $class));
 	}

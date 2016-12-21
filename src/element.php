@@ -92,6 +92,12 @@ class element
 		return $this->attributes['id'];
 	}
 
+	// obtain the tag
+	public function get_tag()
+	{
+		return $this->tag;
+	}
+
 	// internal function for walking content tree to get all head content
 	protected function _get_head()
 	{
@@ -172,13 +178,11 @@ class element
 		*/
 		$dont_close=array('meta');
 		$dont_self_close = array('script', 'i', 'iframe', 'div', 'title', 'span');
-		$always_break_before = array('ul', 'li', 'script', 'meta', 'link');
+		$always_break_before = array('ul', 'li', 'tr', 'td', 'script', 'meta', 'link');
 		$indention = '  ';
-		$indent = str_repeat($indention, $level); //$indention * $level;
+		$indent = str_repeat($indention, $level);
 		$html = $this->raw_html;
 		$length = strlen($html);
-		//html += ''.join(item.asHtml(level + 1) for item in $this->contents)
-		//for item in $this->contents:
 		if ($this->tag) {
 			$increment = 1;
 		} else {
@@ -187,7 +191,6 @@ class element
 
 		if ($this->contents) foreach ($this->contents as $item) {
 			$sub_html = $item->asHtml($level + $increment);
-			//if not sub_html.startswith('\n') and sub_html.startswith('<'):
 			if ($sub_html && $sub_html[0]!="\n" && $sub_html[0]!='<') {
 				if ($length + strlen($sub_html) > 70) {
 					$sub_html = "\n" . $indent . $indention . $sub_html;
@@ -198,7 +201,6 @@ class element
 			$length = strlen($html);
 		}
 
-		//if not $this->tag:
 		if (!$this->tag) {
 			return $html;
 		}
@@ -211,47 +213,31 @@ class element
 			return '<'.$tag_attr.'>';
 		}
 
-		//if not html and $this->tag not in dont_$this_close:
 		if (!$html && !in_array($this->tag, $dont_self_close)) {
-			//return ''.join(['<', tag_attr, ' />'])
 			if (in_array($this->tag, $always_break_before)) {
 				return "\n".$indent.'<'.$tag_attr.' />';
 			}
 			return '<'.$tag_attr.' />';
 		}
 
-		//if html.startswith('\n'):
 		if ($html && $html[0]=="\n") {
-			//return ''.join(['\n', indent, '<', tag_attr, '>',
-			//				html,
-			//				'\n', indent, '</', $this->tag, '>'])
 			return	"\n".$indent.'<'.$tag_attr.'>'.
 				$html.
 				"\n".$indent.'</'.$this->tag.'>';
 		}
 
-		//if strlen(html) + strlen(indent) > 70:
 		if (strlen($html) + strlen($indent) > 70) {
-			//return ''.join(['\n', indent, '<', tag_attr, '>',
-			//				'\n', indent, indention, html,
-			//				'\n', indent, '</', $this->tag, '>'])
 			return	"\n".$indent.'<'.$tag_attr.'>'.
 				"\n".$indent.$indention.$html.
 				"\n".$indent.'</'.$this->tag.'>';
 		}
 
-		//if $this->tag in always_break_before:
-		if (in_array($this->tag, array('ul', 'li', 'script', 'meta'))) {
-			//return ''.join(['\n', indent, '<', tag_attr, '>',
-			//				html,
-			//				'</', $this->tag, '>'])
+		if (in_array($this->tag, $always_break_before)) {
 			return	"\n".$indent.'<'.$tag_attr.'>'.
 				$html.
 				'</'.$this->tag.'>';
 		}
-		//return ''.join(['<', tag_attr, '>',
-		//				html,
-		//				'</', $this->tag, '>'])
+
 		return	'<'.$tag_attr.'>'.
 			$html.
 			'</'.$this->tag.'>';
